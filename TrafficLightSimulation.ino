@@ -1,43 +1,64 @@
-// LED Traffic Light Simulation
-// This program simulates a traffic light system with a pedestrian crossing button.
+// define pin numbers fo the LEDs and the button
+const int redLightPin = 8;
+const int yellowLightPin = 9;
+const int greenLightPin = 10;
+const int buttonPin = 2; //button is connected to pin2
 
-const int redLightPin = 12;   // Red LED connected to GPIO 23
-const int yellowLightPin = 14; // Yellow LED connected to GPIO 22
-const int greenLightPin = 21;  // Green LED connected to GPIO 21
-const int buttonPin = 1;      // Pedestrian crossing button connected to GPIO 19
+// Variable to track button press state
+volatile bool buttonPresses = false;
 
+// Setup function
 void setup() {
-   pinMode(redLightPin, OUTPUT);
-   pinMode(yellowLightPin, OUTPUT);
-   pinMode(greenLightPin, OUTPUT);
-   pinMode(buttonPin, INPUT_PULLUP);  // Use INPUT_PULLUP for button
-  // Initialize the LED pins as outputs
-  // TODO: Set the button pin as INPUT
+  //initialize the LED pins as outputs
+  pinMode(redLightPin, OUTPUT);
+  pinMode(yellowLightPin, OUTPUT);
+  pimMode(greenLightPin, OUTPUT);
+
+  // initialize the button pin as input with internal pull-up
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // Attach an interrupt to the button press
+  attachInterrupt(digitalPinToInterrupt(buttonPin), buttonInterrupt, FALLING);
+
+  // start serial communication (optional for debugging)
+  Serial.begin(9600);
 }
 
+// Main loop
 void loop() {
-  // TODO: Implement the traffic light sequence
-  // Use delays for light timing: Red, Yellow, Green
-  
-  // TODO: Implement pedestrian crossing logic
-  // Change light sequence when button is pressed
-  if (digitalRead(buttonPin) == LOW) {  // Button is pressed
-    digitalWrite(redLightPin, LOW);
+  if (buttonPressed) {
+    // pedestrian crossing logic
+    Serial.println("Pedestrian button pressed! Changing sequence...");
+
+    // stop normal sequence and turn on the red light for crossing
+    digitalWrite(redLightPin, HIGH);
     digitalWrite(yellowLightPin, LOW);
     digitalWrite(greenLightPin, LOW);
-  } else {  // Button is not pressed
-    digitalWrite(redLightPin, HIGH);    // turn on LED1 
-    delay(200);                  // wait for 200ms
-    digitalWrite(yellowLightPin, HIGH);    // turn on LED2
-    delay(200);                  // wait for 200ms       
-    digitalWrite(greenLightPin, HIGH);    // turn on LED3 
-    delay(200);                  // wait for 200ms
-    digitalWrite(redLightPin, LOW);     // turn off LED1
-    delay(300);                  // wait for 300ms
-    digitalWrite(yellowLightPin, LOW);     // turn off LED2
-    delay(300);                  // wait for 300ms
-    digitalWrite(greenLightPin, LOW);     // turn off LED3
-    delay(300);                  // wait for 300ms before running the sequence again
+    delay(5000);
+
+    // After pedestrian crossing reset hte button state and return to normal sequence
+    buttonPressed = false;
+  } else {
+    // Normal traffic light sequence
+    digitalWrite(redLightPin, HIGH);  // red light on
+    delay(5000);                      // wait 5 seconds
+    digitalWrite(redLightPin, LOW);   // red light off
+
+    digitalWrite(yellowLightPin, HIGH);  //Yellow light on
+    delay(2000);
+    digitalWrite(yellowLightPin, LOW);
+
+    digitalWrite(greenLightPin, HIGH);
+    delay(5000);
+    digitalWrite(greenLightPin, LOW);
+
+    digitalWrite(yellowLightPin, HIGH);  //Yellow light on
+    delay(2000);
+    digitalWrite(yellowLightPin, LOW);
   }
 }
 
+// interrupt service routine (ISR) for button press
+void buttonInterrupt() {
+  buttonPressed = true;
+}
